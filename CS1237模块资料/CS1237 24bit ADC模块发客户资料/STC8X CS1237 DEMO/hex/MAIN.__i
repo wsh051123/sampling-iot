@@ -1,0 +1,1 @@
+"..\user\MAIN.C" BROWSE INCDIR(..\user) DEBUG OBJECTEXTEND PRINT(.\LIST\MAIN.lst) OBJECT(..\hex\MAIN.obj)

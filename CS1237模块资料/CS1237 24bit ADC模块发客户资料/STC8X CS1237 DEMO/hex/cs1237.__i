@@ -1,0 +1,1 @@
+"..\user\cs1237.c" BROWSE INCDIR(..\user) DEBUG OBJECTEXTEND PRINT(.\LIST\cs1237.lst) OBJECT(..\hex\cs1237.obj)

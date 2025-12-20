@@ -1,0 +1,213 @@
+C51 COMPILER V9.01   CS1237                                                                08/28/2019 16:34:57 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE CS1237
+OBJECT MODULE PLACED IN ..\hex\cs1237.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\user\cs1237.c BROWSE INCDIR(..\user) DEBUG OBJECTEXTEND PRINT(.\LIST\cs1
+                    -237.lst) OBJECT(..\hex\cs1237.obj)
+
+line level    source
+
+   1          #include "cs1237.h"
+   2          
+   3          #define ADC_Bit  20 //ADC有效位数，带符号位 最高24位
+   4          #define SCK_1  SCLK = 1
+   5          #define SCK_0  SCLK = 0
+   6          #define DAT_1  DOUT = 1
+   7          #define DAT_0  DOUT = 0
+   8          #define NOP_5()         _nop_();_nop_()
+   9          #define NOP30()         NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();
+  10          #define NOP40()         NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();NOP_5();
+  11          #define One_CLK  SCK_1;NOP40();SCK_0;NOP40();
+  12          #define CS_CON  0X00   //芯片地配置 内部REF 输出40HZ PGA=128 通道A 0X1C   
+  13          
+  14          sbit DOUT = P3^7;//数据对应IO口
+  15          sbit SCLK = P3^5;//时钟对应IO口
+  16          
+  17          //延时500US 25MHZ
+  18          void delay_500us(unsigned char a)
+  19          {       
+  20   1              unsigned char i,j,b;
+  21   1              for(b=0;b<a;b++)
+  22   1              {
+  23   2                      i = 13;
+  24   2                      j = 37;
+  25   2                      do
+  26   2                      {
+  27   3                              while (--j);
+  28   3                      } while (--i);
+  29   2              }
+  30   1      }
+  31          
+  32          //配置CS1237芯片
+  33          void Con_CS1237(void)
+  34          {
+  35   1              unsigned char i;
+  36   1              unsigned char dat;
+  37   1              unsigned char count_i=0;//溢出计时器
+  38   1      
+  39   1              dat = CS_CON;// 0100 1000
+  40   1              SCLK = 0;//SCK_0;//时钟拉低
+  41   1              while(DOUT)//芯片准备好数据输出  时钟已经为0，数据也需要等CS1237全部拉低为0才算都准备好
+  42   1              {
+  43   2                      delay_500us(10);
+  44   2                      count_i++;
+  45   2                      if(count_i > 150)
+  46   2                      {
+  47   3                              SCLK = 1;//SCK_1;
+  48   3                              DOUT = 1;//DAT_1;
+  49   3                              return;//超时，则直接退出程序
+  50   3                      }
+  51   2              }
+  52   1              for(i=0;i<29;i++)// 1 - 29
+  53   1              {
+  54   2      //              One_CLK;
+C51 COMPILER V9.01   CS1237                                                                08/28/2019 16:34:57 PAGE 2   
+
+  55   2                      SCLK = 1;//SCK_1;
+  56   2                      NOP40();
+  57   2                      SCLK = 0;//;SCK_0;
+  58   2                      NOP40();
+  59   2              }
+  60   1              SCLK = 1;NOP30();DAT_1;SCLK = 0;NOP30();//SCK_1;NOP30();DAT_1;SCK_0;NOP30();//30
+  61   1              SCK_1;NOP30();DOUT = 1;SCK_0;NOP30();//31
+  62   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//32
+  63   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//33
+  64   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//34
+  65   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//35
+  66   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//36
+  67   1              One_CLK;//37     写入了0x65
+  68   1              for(i=0;i<8;i++)// 38 - 45个脉冲了，写8位数据
+  69   1              {
+  70   2                      SCK_1;
+  71   2                      NOP40();
+  72   2                      if(dat&0x80)
+  73   2                              DAT_1;
+  74   2                      else
+  75   2                              DAT_0;
+  76   2                      dat <<= 1;
+  77   2                      SCK_0;
+  78   2                      NOP40();
+  79   2              }
+  80   1              One_CLK;//46个脉冲拉高数据引脚
+  81   1      }
+  82          
+  83          //读取芯片的配置数据
+  84          unsigned char Read_CON(void)
+  85          {
+  86   1              unsigned char i;
+  87   1              unsigned char dat=0;//读取到的数据
+  88   1              unsigned char count_i=0;//溢出计时器
+  89   1              unsigned char k=0,j=0;//中间变量
+  90   1              SCK_0;//时钟拉低
+  91   1              while(DOUT)//芯片准备好数据输出  时钟已经为0，数据也需要等CS1237全部拉低为0才算都准备好
+  92   1              {
+  93   2                      delay_500us(10);
+  94   2                      count_i++;
+  95   2                      if(count_i > 150)
+  96   2                      {
+  97   3                              SCK_1;
+  98   3                              DAT_1;
+  99   3                              return 1;//超时，则直接退出程序
+ 100   3                      }
+ 101   2              }
+ 102   1              for(i=0;i<29;i++)// 1 - 29
+ 103   1              {
+ 104   2                      One_CLK;
+ 105   2              }
+ 106   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//30
+ 107   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//31
+ 108   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//32
+ 109   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//33
+ 110   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//34
+ 111   1              SCK_1;NOP30();DAT_1;SCK_0;NOP30();//35
+ 112   1              SCK_1;NOP30();DAT_0;SCK_0;NOP30();//36
+ 113   1              DAT_1;
+ 114   1              One_CLK;//37     写入了0x56
+ 115   1              dat=0;
+ 116   1              for(i=0;i<8;i++)// 38 - 45个脉冲了，读取数据
+C51 COMPILER V9.01   CS1237                                                                08/28/2019 16:34:57 PAGE 3   
+
+ 117   1              {
+ 118   2                      One_CLK;
+ 119   2                      dat <<= 1;
+ 120   2                      if(DOUT)
+ 121   2                              dat++;
+ 122   2              }
+ 123   1              One_CLK;//46个脉冲拉高数据引脚
+ 124   1              return dat;
+ 125   1      }
+ 126          
+ 127          //读取ADC数据，返回的是一个有符号数据
+ 128          unsigned long Read_CS1237(void)
+ 129          {
+ 130   1              unsigned char i;
+ 131   1              unsigned long dat=0;//读取到的数据
+ 132   1              unsigned char count_i=0;//溢出计时器
+ 133   1              DOUT = 1;//端口锁存1，51必备
+ 134   1              SCK_0;//时钟拉低
+ 135   1              while(DOUT)//芯片准备好数据输出  时钟已经为0，数据也需要等CS1237拉低为0才算都准备好
+ 136   1              {
+ 137   2                      delay_500us(10);
+ 138   2                      count_i++;
+ 139   2                      if(count_i > 300)
+ 140   2                      {
+ 141   3                              SCK_1;
+ 142   3                              DAT_1;
+ 143   3                              return 0;//超时，则直接退出程序
+ 144   3                      }
+ 145   2              }
+ 146   1              DOUT = 1;//端口锁存1，51必备
+ 147   1              dat=0;
+ 148   1              for(i=0;i<24;i++)//获取24位有效转换
+ 149   1              {
+ 150   2                      SCK_1;
+ 151   2                      NOP40();
+ 152   2                      dat <<= 1;
+ 153   2                      if(DOUT)
+ 154   2                              dat ++;
+ 155   2                      SCK_0;
+ 156   2                      NOP40();        
+ 157   2              }
+ 158   1              for(i=0;i<3;i++)//一共输入27个脉冲
+ 159   1              {
+ 160   2                      One_CLK;
+ 161   2              }
+ 162   1              DAT_1;
+ 163   1              
+ 164   1              Uart_send_hex_to_txt(dat>>16);
+ 165   1              Uart_send_hex_to_txt(dat>>8);
+ 166   1              Uart_send_hex_to_txt(dat);
+ 167   1              
+ 168   1              if((dat&0x800000) == 0x800000)  //最高位为1，表示输入为负值
+ 169   1              {
+ 170   2                      dat = ~dat;
+ 171   2                      UartSend(0x2D);                         // - 号
+ 172   2              }
+ 173   1              else 
+ 174   1                      UartSend(0x2B);                         //+  号
+ 175   1                      
+ 176   1              //先根据宏定义里面的有效位，丢弃一些数据
+ 177   1      //      i = 24 - ADC_Bit;//i表示将要丢弃的位数
+ 178   1      //      dat >>= i;//丢弃多余的位数
+C51 COMPILER V9.01   CS1237                                                                08/28/2019 16:34:57 PAGE 4   
+
+ 179   1              
+ 180   1      
+ 181   1              return dat;
+ 182   1      }
+ 183          //
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1111    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

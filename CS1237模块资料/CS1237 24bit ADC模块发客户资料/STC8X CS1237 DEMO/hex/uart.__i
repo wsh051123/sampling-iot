@@ -1,0 +1,1 @@
+"..\user\uart.c" BROWSE INCDIR(..\user) DEBUG OBJECTEXTEND PRINT(.\LIST\uart.lst) OBJECT(..\hex\uart.obj)

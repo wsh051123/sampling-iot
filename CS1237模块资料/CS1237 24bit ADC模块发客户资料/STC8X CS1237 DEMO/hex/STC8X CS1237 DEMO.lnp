@@ -1,0 +1,6 @@
+"..\hex\delay.obj",
+"..\hex\MAIN.obj",
+"..\hex\uart.obj",
+"..\hex\cs1237.obj" 
+TO "..\hex\STC8X CS1237 DEMO" 
+PRINT(".\LIST\STC8X CS1237 DEMO.m51") RAMSIZE(256) 

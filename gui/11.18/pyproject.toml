@@ -1,0 +1,16 @@
+[project]
+name = "cs1237-gui"
+version = "1.0.0"
+description = "CS1237 ADC控制器 - PyQt6图形界面"
+requires-python = ">=3.8"
+dependencies = [
+    "pyqt6>=6.4.0",
+    "pyserial>=3.5",
+    "matplotlib>=3.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=23.0.0",
+    "pylint>=2.15.0",
+]

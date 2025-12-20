@@ -1,0 +1,118 @@
+C51 COMPILER V9.01   MAIN                                                                  08/28/2019 16:38:07 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN ..\hex\MAIN.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\user\MAIN.C BROWSE INCDIR(..\user) DEBUG OBJECTEXTEND PRINT(.\LIST\MAIN.
+                    -lst) OBJECT(..\hex\MAIN.obj)
+
+line level    source
+
+   1          /*                        -- 渡河蚂蚁电子工作室 --                        */
+   2          /*
+   3          *   说    明: STC8A8KS4A12 DEMO程序
+   4          *   开发平台: STC8A8KS4A12  
+   5          *   淘宝网店: https://shop136063510.taobao.com
+   6          *
+   7          //  文件名：main.c                                                              
+   8          //  说明：供客户测试模块通信使用程序                                                                  
+   9          //  编写人员：Duhemayi                                                                   
+  10          //  编写日期：2018-09-16                                                               
+  11          //  程序维护：
+  12          //  维护记录：
+  13          //      版    本: V1.0
+  14          //                                                          
+  15          // 免责声明：该程序仅用于学习与交流 
+  16          // (c) Duhemayi Corporation. All rights reserved.     
+  17          ******************************************************************************/
+  18          #include "config.h"
+  19          
+  20          unsigned char Flag_connect;
+  21          unsigned int MAX6675_Temp;
+  22          
+  23          void MAIN_CLK_Config(void)
+  24          {
+  25   1              #define CKSEL           (*(unsigned char volatile xdata *)0xfe00)
+  26   1              #define CKDIV           (*(unsigned char volatile xdata *)0xfe01)
+  27   1              #define IRC24MCR        (*(unsigned char volatile xdata *)0xfe02)
+  28   1              #define XOSCCR          (*(unsigned char volatile xdata *)0xfe03)
+  29   1              #define IRC32KCR        (*(unsigned char volatile xdata *)0xfe04)
+  30   1      
+  31   1              P_SW2 = 0x80;                                                           //访问外设寄存器之前，先将P_SW2 BIT7置1
+  32   1          CKSEL = 0x00;                               //选择主时钟源内部IRC ( 默认 )
+  33   1          P_SW2 = 0x00;                                                               //访问完外设寄存器之后，再将P_SW2 BIT7置0
+  34   1      
+  35   1          
+  36   1      //    P_SW2 = 0x80;
+  37   1      //    XOSCCR = 0xc0;                              //启动外部晶振
+  38   1      //    while (!(XOSCCR & 1));                      //等待时钟稳定
+  39   1      //    CKDIV = 0x00;                               //时钟不分频
+  40   1      //    CKSEL = 0x01;                               //选择外部晶振
+  41   1      //    P_SW2 = 0x00;
+  42   1          
+  43   1      
+  44   1          /*
+  45   1          P_SW2 = 0x80;
+  46   1          IRC32KCR = 0x80;                            //启动内部32K IRC
+  47   1          while (!(IRC32KCR & 1));                    //等待时钟稳定
+  48   1          CKDIV = 0x00;                               //时钟不分频
+  49   1          CKSEL = 0x03;                               //选择内部32K
+  50   1          P_SW2 = 0x00;
+  51   1          */
+  52   1      }
+  53          
+  54          /******************************************************************************/
+C51 COMPILER V9.01   MAIN                                                                  08/28/2019 16:38:07 PAGE 2   
+
+  55          // 函数名称：main 
+  56          // 输入参数： 
+  57          // 输出参数： 
+  58          // 函数功能：打开外部中断0，按下按键改变LED的亮灭 
+  59          
+  60          /******************************************************************************/
+  61          void main(void)
+  62          {        
+  63   1              unsigned long val;
+  64   1      //      uint8 a;
+  65   1      
+  66   1              {
+  67   2                      MAIN_CLK_Config();      //设置主时钟
+  68   2                      Uart1_Init();
+  69   2                      P3 = 0XFF;
+  70   2                      Con_CS1237();//配置CS1237芯片，这里验证了写时序
+  71   2                      Delay100ms();
+  72   2                      while(1)
+  73   2                      {
+  74   3                              val =  Read_CS1237();
+  75   3      //                      a = Read_CON();           //读取配置字
+  76   3      //                      val = val*500/16777216;
+  77   3      //                      val = val*250/16777216;
+  78   3      //                      val = val*500/8388608;
+  79   3                              val = val*250/8388608;
+  80   3                              UART_Send_dat(val);
+  81   3                              UartSend(0x6d);
+  82   3                              UartSend(0x56);
+  83   3                              UartSend('\r');
+  84   3                              UartSend('\n');
+  85   3      //                      UartSend(a);
+  86   3                              Delay100ms();
+  87   3                              Delay100ms();Delay100ms();Delay100ms();Delay100ms();
+  88   3                      }
+  89   2              }       
+  90   1      }
+  91           
+  92          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    111    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
